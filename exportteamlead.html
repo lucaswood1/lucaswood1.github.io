@@ -7,7 +7,6 @@
 <body>
 <form id="controls">
   <input type="text" placeholder="Aha! subdomain" id="subdomain"></input>
-  <input type="text" placeholder="Product key" id="product-key"></input>
   <input type="submit" class="btn" value="Load features"></input>
 </form>
 
@@ -20,8 +19,6 @@ $("#controls").submit(function() {
 		// Replace this with your redirect URL.
 		redirectUri: "https://lucaswood1.github.io/exportteamlead.html"
 	}).authenticate(function(api, success, message) {
-		var productKey = $("#product-key").val();
-
 		// Hide the controls.
 		$("#controls").remove();
 
