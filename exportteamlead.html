@@ -23,9 +23,7 @@ $("#controls").submit(function() {
 		$("#controls").remove();
 
 		api.get("/tasks", {}, function(response) {
-			response["tasks"].forEach(function(turnip) {
-				$('mainT').append(turnip['id']);
-			});
+			$('mainT').text(response["tasks"][0]['id']);
 		});
 	});
 	return false;
