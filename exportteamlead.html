@@ -12,25 +12,25 @@
 </form>
 
 <script>
-  $("#controls").submit(function() {
-    new AhaApi({
-      accountDomain: $("#subdomain").val(),
-      // Replace this with your client ID.
-      clientId: "03234870a0bf700d0722d6435463780f97cfb9ccad800c2815c27f0324a8159c", 
-      // Replace this with your redirect URL.
-      redirectUri: "https://lucaswood1.github.io/exportteamlead.html"
-    }).authenticate(function(api, success, message) {
-      var productKey = $("#product-key").val();
-      
-      // Hide the controls.
-      $("#controls").remove();
+$("#controls").submit(function() {
+	new AhaApi({
+		accountDomain: $("#subdomain").val(),
+		// Replace this with your client ID.
+		clientId: "03234870a0bf700d0722d6435463780f97cfb9ccad800c2815c27f0324a8159c", 
+		// Replace this with your redirect URL.
+		redirectUri: "https://lucaswood1.github.io/exportteamlead.html"
+	}).authenticate(function(api, success, message) {
+		var productKey = $("#product-key").val();
 
-      api.get("/products/" + productKey + "/features", {}, function(response) {
-        // Do something with the features.
-      });
-    });
-    return false;
-  });
+		// Hide the controls.
+		$("#controls").remove();
+
+		api.get("/products/" + productKey + "/features", {}, function(response) {
+			alert(message);
+		});
+	});
+	return false;
+});
 </script>
 </body>
 
