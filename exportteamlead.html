@@ -27,7 +27,7 @@ $("#controls").submit(function() {
 			what = response;
 			var text;
 			for (i = 0; i < 20; i++) { 
-				var looker = response[0]["tasks"][i];
+				var looker = response["tasks"][i];
 				if (looker['status'] == "completed") break;
 				text += looker['name'] + "<br>";
 			}
