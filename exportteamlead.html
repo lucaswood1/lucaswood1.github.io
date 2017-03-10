@@ -23,7 +23,14 @@ $("#controls").submit(function() {
 		$("#controls").remove();
 
 		api.get("/tasks", {}, function(response) {
-			$('#mainT').text(response["tasks"][0]['id']);
+			var text;
+			for (i = 0; i < response[0]["tasks"].length; i++) { 
+				var looker = response[0]["tasks"][i];
+				if (looker['status'] == "completed") break;
+				text += looker['name'] + "<br>";
+			}
+
+			$('#mainT').text(text);
 		});
 	});
 	return false;
