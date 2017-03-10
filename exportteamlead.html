@@ -26,12 +26,15 @@ $("#controls").submit(function() {
 		$("#controls").remove();
 
 		api.get("/products/" + productKey + "/features", {}, function(response) {
-			alert(message);
+			$('#mainT').text(response);
 		});
 	});
 	return false;
 });
 </script>
+
+<p id="mainT">Nothing to show</p>
+
 </body>
 
 </html>
