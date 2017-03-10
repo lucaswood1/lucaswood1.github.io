@@ -22,7 +22,7 @@ $("#controls").submit(function() {
 		// Hide the controls.
 		$("#controls").remove();
 
-		api.get("https://ruthsai.aha.io/api/v1/tasks", {}, function(response) {
+		api.get("/tasks", {}, function(response) {
 			response["tasks"].each(function(turnip) {
 				$('mainT').append(turnip['id']);
 			});
