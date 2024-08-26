@@ -1,11 +1,60 @@
+<!DOCTYPE html>
 <html>
 <head>
-  <title>
-    Lucas Wood's Homepage
-  </title>
-  <body>
-    <h1>Hello!</h1>
-    <marquee>Test</marquee>
-  </body>
+<title>Time-Based DIVs</title>
+<style>
+  div[data-from][data-to] { display: none; } /* Hide all divs initially */
+  body {
+    background-color: #1a1825;
+    color: white;
+    font-family:Arial, Helvetica, sans-serif;
+    padding: 3em;
+    font-size: 2em;
+  }
+</style>
 </head>
+<body>
+
+  <h1>Current Time: <span id="currentTimeDisplay"></span></h1>
+  <div data-from="0700" data-to="0745">Breakfast</div>
+  <div data-from="0730" data-to="0800">Get dressed and brush teeth</div>
+  <div data-from="0800" data-to="0810">Leave for school</div>
+  <div data-from="1600" data-to="1630">Start cooking dinner</div>
+  <div data-from="1745" data-to="1800">Prepare dinner, kids arrive</div>
+  <div data-from="1800" data-to="1815">Dinner time</div>
+  <div data-from="1815" data-to="1830">Play time</div>
+  <div data-from="1830" data-to="1900">Bath time</div>
+  <div data-from="1900" data-to="1915">John Max practices Violin</div>
+  <div data-from="1900" data-to="2030">Shows</div>
+  <div data-from="2030" data-to="2345">Bedtime</div>
+
+  <script>
+    function checkTime() {
+      const now = new Date();
+      const currentTime = now.getHours() * 100 + now.getMinutes();
+
+      // Update the h1 with the current time
+      const timeDisplay = document.getElementById('currentTimeDisplay');
+      const formattedTime = now.toLocaleTimeString(); 
+      timeDisplay.textContent = formattedTime;
+
+      const divs = document.querySelectorAll('div[data-from][data-to]');
+      divs.forEach(div => {
+        const fromTime = parseInt(div.dataset.from);
+        const toTime = parseInt(div.dataset.to);
+
+        if (currentTime >= fromTime && currentTime < toTime) {
+          div.style.display = 'block'; 
+        } else {
+          div.style.display = 'none';
+        }
+      });
+    }
+
+    // Initial check and then every minute
+    checkTime();
+    setInterval(checkTime, 60000); 
+  </script>
+
+</body>
 </html>
