@@ -68,6 +68,12 @@ export const Config = {
             size: 10, // 10x10 cells
             constructionTime: 15, // Seconds to build
             trainingTime: 10 // Seconds to train a unit
+        },
+        huntersLodge: {
+            cost: 10,
+            size: 10, // 10x10 cells
+            constructionTime: 15, // Seconds to build
+            trainingTime: 10 // Seconds to train a unit
         }
     },
     

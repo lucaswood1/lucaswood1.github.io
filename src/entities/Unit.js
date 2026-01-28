@@ -36,7 +36,7 @@ export class Unit {
         this.spatialGrid.addUnit(this);
     }
 
-    update(projectiles) {
+    update(projectiles, terrainMap = null) {
         // Check if unit is dead
         if (this.health <= 0) {
             return;
@@ -115,12 +115,20 @@ export class Unit {
             }
         }
 
+        // Calculate terrain speed multiplier based on current position
+        let speedMultiplier = 1.0;
+        if (terrainMap) {
+            const currentHeight = terrainMap.getHeight(currentGridPos.x, currentGridPos.y);
+            speedMultiplier = terrainMap.getSpeedMultiplier(currentHeight);
+        }
+
         if (distance > 0.5) {
             const moveDistance = Math.sqrt(dx * dx + dy * dy);
             if (moveDistance > 0) {
-                // Calculate proposed new position
-                const newX = this.x + (dx / moveDistance) * this.speed * this.spatialGrid.cellWidth;
-                const newY = this.y + (dy / moveDistance) * this.speed * this.spatialGrid.cellHeight;
+                // Calculate proposed new position with terrain speed penalty
+                const effectiveSpeed = this.speed * speedMultiplier;
+                const newX = this.x + (dx / moveDistance) * effectiveSpeed * this.spatialGrid.cellWidth;
+                const newY = this.y + (dy / moveDistance) * effectiveSpeed * this.spatialGrid.cellHeight;
                 
                 // Check if the new position would cause a collision
                 const newGridPos = this.spatialGrid.pixelToGrid(newX, newY);

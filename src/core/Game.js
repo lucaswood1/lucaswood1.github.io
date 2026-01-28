@@ -1,9 +1,11 @@
 import { Config } from './Config.js';
 import { SpatialGrid } from '../systems/SpatialGrid.js';
+import { TerrainMap } from '../systems/TerrainMap.js';
 import { Unit } from '../entities/Unit.js';
 import { Builder } from '../entities/Builder.js';
 import { Projectile } from '../entities/Projectile.js';
 import { Building } from '../entities/Building.js';
+import { HuntersLodge } from '../entities/HuntersLodge.js';
 import { ImageLoader } from '../utils/ImageLoader.js';
 import { MapLoader } from './MapLoader.js';
 
@@ -27,6 +29,12 @@ export class Game {
             this.cellHeight
         );
         
+        // Initialize terrain map with procedural height generation
+        this.terrainMap = new TerrainMap(
+            Config.gridWidth,
+            Config.gridHeight
+        );
+        
         // Game state
         this.units = [];
         this.builders = [];
@@ -43,6 +51,7 @@ export class Game {
         // Building placement
         this.buildingPlacementMode = false;
         this.pendingBuilding = null;
+        this.pendingBuildingType = 'trainingFacility'; // Default building type
         
         // Performance tracking
         this.fps = 0;
@@ -140,11 +149,16 @@ export class Game {
         return true;
     }
     
-    placeBuilding(gridX, gridY, faction) {
-        const buildingConfig = Config.buildings.trainingFacility;
+    placeBuilding(gridX, gridY, faction, buildingType = 'trainingFacility') {
+        const buildingConfig = Config.buildings[buildingType] || Config.buildings.trainingFacility;
         const buildingSize = buildingConfig.size;
         if (this.canPlaceBuilding(gridX, gridY, buildingSize)) {
-            const building = new Building(gridX, gridY, faction, this.spatialGrid);
+            let building;
+            if (buildingType === 'huntersLodge') {
+                building = new HuntersLodge(gridX, gridY, faction, this.spatialGrid);
+            } else {
+                building = new Building(gridX, gridY, faction, this.spatialGrid);
+            }
             this.buildings.push(building);
             return building;
         }
@@ -183,14 +197,14 @@ export class Game {
         // Update builders
         for (let builder of this.builders) {
             if (builder.isAlive && builder.isAlive()) {
-                builder.update(this.projectiles);
+                builder.update(this.projectiles, this.terrainMap);
             }
         }
         
-        // Update units (pass projectiles array for combat)
+        // Update units (pass projectiles array for combat and terrainMap for speed penalties)
         for (let unit of this.units) {
             if (unit.isAlive && unit.isAlive()) {
-                unit.update(this.projectiles);
+                unit.update(this.projectiles, this.terrainMap);
             }
         }
         
@@ -238,10 +252,11 @@ export class Game {
         this.selectedUnits = this.selectedUnits.filter(unit => unit.isAlive && unit.isAlive());
     }
     
-    startBuildingPlacement() {
-        const buildingConfig = Config.buildings.trainingFacility;
+    startBuildingPlacement(buildingType = 'trainingFacility') {
+        const buildingConfig = Config.buildings[buildingType] || Config.buildings.trainingFacility;
         if (this.gems >= buildingConfig.cost) {
             this.buildingPlacementMode = true;
+            this.pendingBuildingType = buildingType;
             return true;
         }
         return false;
@@ -250,24 +265,31 @@ export class Game {
     cancelBuildingPlacement() {
         this.buildingPlacementMode = false;
         this.pendingBuilding = null;
+        this.pendingBuildingType = 'trainingFacility';
     }
     
     placeBuildingAt(gridX, gridY, faction) {
         if (!this.buildingPlacementMode) return null;
         
-        const buildingConfig = Config.buildings.trainingFacility;
+        const buildingType = this.pendingBuildingType || 'trainingFacility';
+        const buildingConfig = Config.buildings[buildingType] || Config.buildings.trainingFacility;
         const buildingSize = buildingConfig.size;
         if (!this.canPlaceBuilding(gridX, gridY, buildingSize)) {
             return null;
         }
         
         // Spend gems first
-        if (!this.spendGems(Config.buildingCost)) {
+        if (!this.spendGems(buildingConfig.cost)) {
             return null;
         }
         
-        // Create building
-        const building = new Building(gridX, gridY, faction, this.spatialGrid);
+        // Create building based on type
+        let building;
+        if (buildingType === 'huntersLodge') {
+            building = new HuntersLodge(gridX, gridY, faction, this.spatialGrid);
+        } else {
+            building = new Building(gridX, gridY, faction, this.spatialGrid);
+        }
         
         // Start construction
         building.isConstructing = true;
@@ -286,6 +308,7 @@ export class Game {
         this.buildings.push(building);
         this.buildingPlacementMode = false;
         this.pendingBuilding = null;
+        this.pendingBuildingType = 'trainingFacility';
         return building;
     }
     

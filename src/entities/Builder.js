@@ -98,7 +98,7 @@ export class Builder extends Unit {
         }
     }
     
-    update(projectiles) {
+    update(projectiles, terrainMap = null) {
         // Builders don't attack, but they do move and build
         if (this.health <= 0) {
             return;
@@ -190,11 +190,20 @@ export class Builder extends Unit {
             }
         }
 
+        // Calculate terrain speed multiplier based on current position
+        let speedMultiplier = 1.0;
+        if (terrainMap) {
+            const currentHeight = terrainMap.getHeight(currentGridPos.x, currentGridPos.y);
+            speedMultiplier = terrainMap.getSpeedMultiplier(currentHeight);
+        }
+
         if (distance > 0.5) {
             const moveDistance = Math.sqrt(dx * dx + dy * dy);
             if (moveDistance > 0) {
-                const newX = this.x + (dx / moveDistance) * this.speed * this.spatialGrid.cellWidth;
-                const newY = this.y + (dy / moveDistance) * this.speed * this.spatialGrid.cellHeight;
+                // Apply terrain speed penalty
+                const effectiveSpeed = this.speed * speedMultiplier;
+                const newX = this.x + (dx / moveDistance) * effectiveSpeed * this.spatialGrid.cellWidth;
+                const newY = this.y + (dy / moveDistance) * effectiveSpeed * this.spatialGrid.cellHeight;
                 
                 const newGridPos = this.spatialGrid.pixelToGrid(newX, newY);
                 
@@ -219,8 +228,10 @@ export class Builder extends Unit {
                         const freeDist = Math.sqrt(freeDx * freeDx + freeDy * freeDy);
                         
                         if (freeDist > 0) {
-                            this.x += (freeDx / freeDist) * this.speed * this.spatialGrid.cellWidth * 0.5;
-                            this.y += (freeDy / freeDist) * this.speed * this.spatialGrid.cellHeight * 0.5;
+                            // Apply terrain speed penalty
+                            const effectiveSpeed = this.speed * speedMultiplier;
+                            this.x += (freeDx / freeDist) * effectiveSpeed * this.spatialGrid.cellWidth * 0.5;
+                            this.y += (freeDy / freeDist) * effectiveSpeed * this.spatialGrid.cellHeight * 0.5;
                         }
                     }
                 }

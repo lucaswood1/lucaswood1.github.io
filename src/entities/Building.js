@@ -32,6 +32,9 @@ export class Building {
         this.builders = []; // Builders assigned to this building
         this.isComplete = false;
         
+        // Building type identifier
+        this.buildingType = 'trainingFacility';
+        
         // Mark building cells as occupied
         this.occupyCells();
     }
@@ -51,6 +54,11 @@ export class Building {
     }
     
     canTrain(unitType, gems) {
+        // Regular training facility cannot train hunters (only HuntersLodge can)
+        if (unitType === 'hunter') {
+            return false;
+        }
+        
         const cost = UnitFactory.getUnitCost(unitType);
         return gems >= cost;
     }

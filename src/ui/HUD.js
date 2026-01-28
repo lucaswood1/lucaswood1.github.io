@@ -1,5 +1,6 @@
 import { Config } from '../core/Config.js';
 import { UnitFactory } from '../entities/UnitFactory.js';
+import { HuntersLodge } from '../entities/HuntersLodge.js';
 
 // HUD (Heads-Up Display) management
 export class HUD {
@@ -39,7 +40,20 @@ export class HUD {
         
         // Show building training buttons if building is selected
         if (selectedBuilding && selectedBuilding.isComplete) {
-            const unitTypes = ['caveman', 'builder', 'worker', 'miner', 'hunter'];
+            // Check if this is a hunters lodge (only trains hunters)
+            // Use buildingType property (more reliable than instanceof across modules)
+            const isHuntersLodge = selectedBuilding.buildingType === 'huntersLodge';
+            
+            // Get available unit types based on building type
+            let unitTypes;
+            if (isHuntersLodge) {
+                // Hunters lodge can only train hunters
+                unitTypes = ['hunter'];
+            } else {
+                // Training facility can train all units except hunters
+                unitTypes = ['caveman', 'builder', 'worker', 'miner'];
+            }
+            
             unitTypes.forEach((unitType, index) => {
                 if (index < 9) {
                     const button = this.actionButtons[index];
@@ -90,31 +104,41 @@ export class HUD {
                 }
             });
         }
-        // Show build button if builders are selected
+        // Show build buttons if builders are selected
         else if (selectedBuilders.length > 0) {
-            const button = this.actionButtons[0];
-            const buildingConfig = Config.buildings.trainingFacility;
-            const canAfford = this.game.getGems() >= buildingConfig.cost;
+            // Show both building types: Training Facility and Hunter's Lodge
+            const buildingTypes = [
+                { type: 'trainingFacility', name: 'Training', config: Config.buildings.trainingFacility },
+                { type: 'huntersLodge', name: "Hunter's Lodge", config: Config.buildings.huntersLodge }
+            ];
             
-            button.style.display = 'flex';
-            button.disabled = !canAfford || this.game.buildingPlacementMode;
-            
-            if (this.game.buildingPlacementMode) {
-                button.innerHTML = `<div style="font-size: 9px; line-height: 1.1;">Place<br>Building</div>`;
-            } else {
-                button.innerHTML = `<div style="font-size: 9px; line-height: 1.1;">Build<br>${buildingConfig.cost}g</div>`;
-            }
-            
-            button.onclick = () => {
-                if (this.game.buildingPlacementMode) {
-                    // Cancel placement
-                    this.game.cancelBuildingPlacement();
-                    this.updateActionGrid();
-                } else if (canAfford) {
-                    this.game.startBuildingPlacement();
-                    this.updateActionGrid();
+            buildingTypes.forEach((buildingInfo, index) => {
+                if (index < 2) {
+                    const button = this.actionButtons[index];
+                    const canAfford = this.game.getGems() >= buildingInfo.config.cost;
+                    const isActiveType = this.game.pendingBuildingType === buildingInfo.type;
+                    
+                    button.style.display = 'flex';
+                    button.disabled = !canAfford || (this.game.buildingPlacementMode && !isActiveType);
+                    
+                    if (this.game.buildingPlacementMode && isActiveType) {
+                        button.innerHTML = `<div style="font-size: 9px; line-height: 1.1;">Place<br>${buildingInfo.name}</div>`;
+                    } else {
+                        button.innerHTML = `<div style="font-size: 9px; line-height: 1.1;">${buildingInfo.name}<br>${buildingInfo.config.cost}g</div>`;
+                    }
+                    
+                    button.onclick = () => {
+                        if (this.game.buildingPlacementMode && isActiveType) {
+                            // Cancel placement
+                            this.game.cancelBuildingPlacement();
+                            this.updateActionGrid();
+                        } else if (canAfford && !this.game.buildingPlacementMode) {
+                            this.game.startBuildingPlacement(buildingInfo.type);
+                            this.updateActionGrid();
+                        }
+                    };
                 }
-            };
+            });
         }
     }
     

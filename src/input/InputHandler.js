@@ -115,8 +115,9 @@ export class InputHandler {
             const y = e.clientY - rect.top;
             const gridPos = this.game.spatialGrid.pixelToGrid(x, y);
             
-            // Store preview position
-            const buildingConfig = Config.buildings.trainingFacility;
+            // Store preview position with correct building type
+            const buildingType = this.game.pendingBuildingType || 'trainingFacility';
+            const buildingConfig = Config.buildings[buildingType] || Config.buildings.trainingFacility;
             this.game.pendingBuilding = {
                 gridX: gridPos.x,
                 gridY: gridPos.y,
