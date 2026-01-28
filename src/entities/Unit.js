@@ -24,6 +24,12 @@ export class Unit {
         this.spatialGrid = spatialGrid;
         this.imageLoader = imageLoader;
         this.unitType = 'caveman'; // Unit type identifier (can be overridden by subclasses)
+
+        // Movement animation (hop) state
+        this.spawnTimeMs = performance.now();
+        this.isMoving = false;
+        // Stable per-unit phase offset so groups don't hop in sync
+        this.hopPhase01 = Unit.hash01(this.id);
         
         // Combat properties (default values - can be overridden by subclasses)
         this.health = 10;
@@ -34,6 +40,36 @@ export class Unit {
         
         // Add to spatial grid
         this.spatialGrid.addUnit(this);
+    }
+
+    static hash01(str) {
+        // Simple deterministic string hash -> [0, 1)
+        // (Not cryptographic; just for stable animation phase.)
+        let h = 2166136261;
+        for (let i = 0; i < str.length; i++) {
+            h ^= str.charCodeAt(i);
+            h = Math.imul(h, 16777619);
+        }
+        // Convert to unsigned and normalize
+        return ((h >>> 0) % 1000000) / 1000000;
+    }
+
+    getHopOffsetPx(cellHeight) {
+        if (!this.isMoving) return 0;
+
+        // Tune these for feel
+        const periodMs = 420; // hop cadence
+        const amplitudePx = 3; // hop height in pixels
+        const phaseMs = this.hopPhase01 * periodMs;
+
+        const t = (performance.now() - this.spawnTimeMs + phaseMs) / periodMs;
+        // Only hop upwards (positive half-wave), with a little easing
+        const wave = Math.sin(t * Math.PI * 2);
+        const up = Math.max(0, wave);
+        const eased = Math.pow(up, 1.6);
+
+        // Negative Y lifts up on canvas
+        return -amplitudePx * eased;
     }
 
     update(projectiles, terrainMap = null) {
@@ -104,6 +140,7 @@ export class Unit {
         let dx = this.targetX - this.x;
         let dy = this.targetY - this.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
+        this.isMoving = distance > 0.5;
 
         // Apply avoidance force (stronger to prevent overlap)
         if (Math.abs(avoidanceX) > 0.01 || Math.abs(avoidanceY) > 0.01) {
@@ -167,6 +204,7 @@ export class Unit {
                 }
             }
         } else {
+            this.isMoving = false;
             // Snap to grid position when close enough, but check for collisions first
             const targetGridPos = this.spatialGrid.pixelToGrid(this.targetX, this.targetY);
             if (!this.spatialGrid.isOccupied(targetGridPos.x, targetGridPos.y, this) ||
@@ -184,7 +222,8 @@ export class Unit {
         if (!this.isAlive()) return;
         
         const pixelX = this.gridX * cellWidth;
-        const pixelY = this.gridY * cellHeight;
+        const hopY = this.getHopOffsetPx(cellHeight);
+        const pixelY = this.gridY * cellHeight + hopY;
         const width = cellWidth * Config.unitSize;
         const height = cellHeight * Config.unitSize;
         

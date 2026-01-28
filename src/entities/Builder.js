@@ -27,7 +27,8 @@ export class Builder extends Unit {
         if (!this.isAlive()) return;
         
         const pixelX = this.gridX * cellWidth;
-        const pixelY = this.gridY * cellHeight;
+        const hopY = this.getHopOffsetPx(cellHeight);
+        const pixelY = this.gridY * cellHeight + hopY;
         const width = cellWidth * Config.unitSize;
         const height = cellHeight * Config.unitSize;
         
@@ -181,6 +182,7 @@ export class Builder extends Unit {
         let dx = this.targetX - this.x;
         let dy = this.targetY - this.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
+        this.isMoving = distance > 0.5;
 
         if (Math.abs(avoidanceX) > 0.01 || Math.abs(avoidanceY) > 0.01) {
             const avoidanceMag = Math.sqrt(avoidanceX * avoidanceX + avoidanceY * avoidanceY);
@@ -237,6 +239,7 @@ export class Builder extends Unit {
                 }
             }
         } else {
+            this.isMoving = false;
             const targetGridPos = this.spatialGrid.pixelToGrid(this.targetX, this.targetY);
             if (!this.spatialGrid.isOccupied(targetGridPos.x, targetGridPos.y, this) ||
                 (targetGridPos.x === this.gridX && targetGridPos.y === this.gridY)) {
